@@ -34,15 +34,23 @@ def check_sample_df(x):
 
 
 def create_sample_df(data_df, threshold=20):
-    sample_df_title = ["sample", "mean_depth", "pass_coverage", "std_depth","cv_depth", "Q1", "Q01"]
+    sample_df_title = [
+        "sample",
+        "mean_depth",
+        "pass_coverage",
+        "std_depth",
+        "cv_depth",
+        "Q1",
+        "Q01",
+    ]
     sample_df_data = []
     for sample in data_df["sample"].unique().tolist():
         df_sub = data_df[data_df["sample"] == sample]
         mean_depth = df_sub.depth.mean()
         pass_ratio = 100 * (df_sub.depth >= threshold).sum() / len(df_sub.depth)
-        #add cv -- Coefficient of Variation
+        # add cv -- Coefficient of Variation
         std = df_sub.depth.std()
-        cv = round(mean_depth/std, 3) * 100
+        cv = round(mean_depth / std, 3) * 100
         q1 = round(df_sub.depth.quantile(0.25))
         qplus = round(df_sub.depth.quantile(0.1))
         sample_df_data.append([sample, mean_depth, pass_ratio, std, cv, q1, qplus])
@@ -108,7 +116,8 @@ def dropout_decision(x):
         return "Highlight, low coverage region"
     else:
         return "Big Warning, super low coverage region"
-    
+
+
 def stable_decision(x):
     if x["mean"] >= x["Q1"]:
         return "stable"
@@ -172,7 +181,7 @@ def sample_zscore_summary(coverage_df, scheme_section, sample_df):
     amp_df["zscore_for_mean"] = amp_df.groupby(by="sample")["mean"].transform(zscore)
     amp_df["dropout"] = amp_df.apply(dropout_decision, axis=1)
     amp_df["stable"] = amp_df.apply(stable_decision, axis=1)
-    #amp_df = pd.merge(amp_df, sample_df, on="sample", how="left")
+    # amp_df = pd.merge(amp_df, sample_df, on="sample", how="left")
     return amp_df
 
 
@@ -209,13 +218,13 @@ def main():
             print(f"-- Results for {run_id} are saved to local file --")
         summary_df.to_csv("full_summary.csv", index=None)
 
-        #concat the result.tsv as well
+        # concat the result.tsv as well
         result_df = pd.DataFrame()
         print("merge the result tsv files")
         for item in artic_folder.rglob("*_results.tsv"):
             df_tmp = pd.read_csv(item, sep="\t")
             result_df = pd.concat([result_df, df_tmp], ignore_index=True)
-        result_df.to_csv("artic_result.csv",index=None)
+        result_df.to_csv("artic_result.csv", index=None)
     else:
         coverage_df = load_artic_coverage(args.artic)
         sample_df = create_sample_df(coverage_df, args.threshold)
